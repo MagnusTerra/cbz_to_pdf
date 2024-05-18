@@ -7,6 +7,15 @@ import subprocess
 import tempfile
 
 
+def get_file_directory(file_path):
+    # Get the directory of the file
+    directory = os.path.dirname(file_path)
+    
+    # Get the base folder name
+    folder_name = os.path.basename(directory)
+    
+    return folder_name
+
 def cbz_to_pngs(cbz_file, output_dir):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -60,24 +69,31 @@ def convert_cbz_to_pdf(cbz_file, output_directory=None):
     
     if output_directory is None:
             
+        dir_path = get_file_directory(cbz_file)
         # Create a temporary directory to extract the images
-        output_dir = 'temp_images'
+        output_dir = f'{dir_path}/temp_images'
+        
+
         os.makedirs(output_dir, exist_ok=True)
 
         # Get the base name of the CBZ file (without the extension)
         base_name = os.path.splitext(os.path.basename(cbz_file))[0]
         # Create the name of the output PDF file
-        output_pdf = base_name + '.pdf'
+        
+        output_pdf = os.path.join(dir_path, base_name + '.pdf')
 
         try:
+            print("Extracting the images from the CBZ file")
             # Extract the images from the CBZ file
             cbz_to_pngs(cbz_file, output_dir)
-
+            print("Images extracted successfully")
+            print("Creating the PDF from the extracted images")
             # Create the PDF from the extracted images
             create_pdf_from_pngs(output_dir, output_pdf)
         finally:
             # Remove the temporary directory and its contents
             shutil.rmtree(output_dir)
+            return output_pdf
     else:  
         # Create the output directory if it doesn't exist
         os.makedirs(output_directory, exist_ok=True)
@@ -88,13 +104,16 @@ def convert_cbz_to_pdf(cbz_file, output_directory=None):
         # Create the name of the output PDF file
         output_pdf = os.path.join(output_directory, base_name + '.pdf')
         try:
+            print("Extracting the images from the CBZ file")
             # Extract the images from the CBZ file
             cbz_to_pngs(cbz_file,temp_dir)
-
+            print("Images extracted successfully")
+            print("Creating the PDF from the extracted images")
             # Create the PDF from the extracted images
             create_pdf_from_pngs(temp_dir, output_pdf)
         finally:
             shutil.rmtree(f'{output_directory}/temp_images')
+            return output_pdf
         
 def reduce_pdf_size(pdf_file):
     """
@@ -106,6 +125,7 @@ def reduce_pdf_size(pdf_file):
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
 
     try:
+        print("Reducing the size of the PDF")
         # Call Ghostscript to compress the PDF
         subprocess.call([
             'gs',
@@ -113,12 +133,11 @@ def reduce_pdf_size(pdf_file):
             '-dCompatibilityLevel=1.4',
             '-dPDFSETTINGS=/screen',  # Change this to /ebook, /printer, or /prepress for different quality
             '-dNOPAUSE',
-            '-dQUIET',
             '-dBATCH',
             f'-sOutputFile={temp_file.name}',
             pdf_file
         ])
-
+        print("PDF reduced successfully")
         # Copy the temporary file to the original file location
         shutil.copyfile(temp_file.name, pdf_file)
     finally:
