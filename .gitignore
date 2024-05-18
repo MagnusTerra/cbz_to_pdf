@@ -5,3 +5,10 @@ Scripts/
 *.cfg
 *.pdf
 notes.txt
+lib/
+.idx
+.vscode
+bin/
+
+
+lib64
