@@ -5,7 +5,7 @@ Scripts/
 *.cfg
 *.pdf
 notes.txt
-lib/
+lib
 .idx
 .vscode
 bin/
