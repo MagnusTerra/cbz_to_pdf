@@ -3,6 +3,8 @@ import shutil
 import zipfile
 from PIL import Image
 import img2pdf
+import subprocess
+import tempfile
 
 
 def cbz_to_pngs(cbz_file, output_dir):
@@ -79,17 +81,41 @@ def convert_cbz_to_pdf(cbz_file, output_directory=None):
     else:  
         # Create the output directory if it doesn't exist
         os.makedirs(output_directory, exist_ok=True)
-        temp_dir = f'{output_directory}temp_images'
+        temp_dir = f'{output_directory}/temp_images'
         os.makedirs(temp_dir, exist_ok=True)
         # Get the base name of the CBZ file (without the extension)
         base_name = os.path.splitext(os.path.basename(cbz_file))[0]
         # Create the name of the output PDF file
         output_pdf = os.path.join(output_directory, base_name + '.pdf')
+        try:
+            # Extract the images from the CBZ file
+            cbz_to_pngs(cbz_file,temp_dir)
 
-        # Extract the images from the CBZ file
-        cbz_to_pngs(cbz_file,temp_dir)
-
-        # Create the PDF from the extracted images
-        create_pdf_from_pngs(temp_dir, output_pdf)
-       
+            # Create the PDF from the extracted images
+            create_pdf_from_pngs(temp_dir, output_pdf)
+        finally:
+            shutil.rmtree(f'{output_directory}/temp_images')
         
+def reduce_pdf_size(pdf_file):
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+
+    try:
+        # Call Ghostscript to compress the PDF
+        subprocess.call([
+            'gs',
+            '-sDEVICE=pdfwrite',
+            '-dCompatibilityLevel=1.4',
+            '-dPDFSETTINGS=/screen',  # Change this to /ebook, /printer, or /prepress for different quality
+            '-dNOPAUSE',
+            '-dQUIET',
+            '-dBATCH',
+            f'-sOutputFile={temp_file.name}',
+            pdf_file
+        ])
+
+        # Copy the temporary file to the original file location
+        shutil.copyfile(temp_file.name, pdf_file)
+    finally:
+        # Clean up the temporary file if it still exists
+        if os.path.exists(temp_file.name):
+            os.remove(temp_file.name)

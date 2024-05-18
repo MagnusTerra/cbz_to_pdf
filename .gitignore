@@ -10,5 +10,6 @@ lib
 .vscode
 bin/
 
-
+test
+*.cbz
 lib64
