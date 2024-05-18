@@ -97,6 +97,12 @@ def convert_cbz_to_pdf(cbz_file, output_directory=None):
             shutil.rmtree(f'{output_directory}/temp_images')
         
 def reduce_pdf_size(pdf_file):
+    """
+    Reduces the size of a PDF file using Ghostscript.
+    
+        Args:
+        pdf_file: The path to the PDF file to reduce.
+    """
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
 
     try:
