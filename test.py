@@ -1,15 +1,45 @@
-import os
+import getopt
+import sys
+from func import *
 
-def get_file_directory(file_path):
-    # Get the directory of the file
-    directory = os.path.dirname(file_path)
-    
-    # Get the base folder name
-    folder_name = os.path.basename(directory)
-    
-    return folder_name
+argumentList = sys.argv[1:]
 
-# Example usage
-file_path = '/home/user/cbz_to_pdf/test/Rakuen Translations , Taikutsu_Capítulo 60.10.cbz'
-folder_name = get_file_directory(file_path)
-print(f"The file is in the '{folder_name}' folder.")
+options = "hmop:c"
+
+# Long options
+long_options = ["Help", "My_file", "Output=", "Path=", "compress"]
+
+path = None
+compress = False
+
+try:
+    arguments, values = getopt.getopt(argumentList, options, long_options)
+    
+    for currentArgument, currentValue in arguments:
+
+        if currentArgument in ("-h", "--Help"):
+            print("Displaying Help")
+            
+        elif currentArgument in ("-m", "--My_file"):
+            print("Displaying file_name:", sys.argv[0])
+            
+        elif currentArgument in ("-o", "--Output"):
+            print("Enabling special output mode (%s)" % (currentValue))
+        
+        elif currentArgument in ("-p", "--Path"):
+            path = currentValue
+            #print("Path set to %s" % (path))
+
+        elif currentArgument in ("-c", "--compress"):
+            compress = True
+
+        else:
+            assert False, "Unhandled Option"
+
+    if path is not None:
+        file = convert_cbz_to_pdf(path)
+        if compress:
+            reduce_pdf_size(file)
+
+except getopt.error as err:
+    print(str(err))
