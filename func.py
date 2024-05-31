@@ -2,9 +2,52 @@ import os
 import shutil
 import zipfile
 from PIL import Image
-import img2pdf
+import img2pdf, pdf2image
 import subprocess
-import tempfile
+import tempfile, pathlib
+
+def main():
+    """
+    This is the main function of the program.
+    It displays a menu and performs actions based on the user's choice.
+    """
+    print("Menu")
+    print("1. Add the cbz file")
+    print("2. Add the cbz file and the output directory")
+    print("3. reduce pdf size")
+    print("4. cbz to pdf and reduce its size")
+    print("5. Exit")
+    choice = int(input("Enter your choice: "))
+    if choice == 1:
+        cbz_file = str(input("Enter the cbz file: ")) # Enter the path of the CBZ file
+        convert_cbz_to_pdf(cbz_file)
+        main()
+
+    elif choice == 2:
+        cbz_file = str(input("Enter the cbz file: "))
+        output_dir = str(input("Enter the output directory: "))
+        convert_cbz_to_pdf(cbz_file, output_dir )
+        main()
+
+    elif choice == 3:
+        pdf_file = str(input("Enter the pdf file: "))
+        reduce_pdf_size(pdf_file)
+        main()
+
+    elif choice == 4:
+        cbz_file = str(input("Enter the cbz file: "))
+        file = convert_cbz_to_pdf(cbz_file)
+        reduce_pdf_size(file)
+        main()
+
+    elif choice == 5:
+        print("Exiting...")
+
+    else:
+        print("Invalid choice. Please try again.")
+        main()
+
+
 
 
 def get_file_directory(file_path):
@@ -144,3 +187,74 @@ def reduce_pdf_size(pdf_file):
         # Clean up the temporary file if it still exists
         if os.path.exists(temp_file.name):
             os.remove(temp_file.name)
+
+def img_to_pdf(img_folder, output_pdf=None):
+    """
+    Converts images in a folder to a PDF file.
+
+    Args:
+        img_folder (str): The path to the folder containing the images.
+        output_pdf (str, optional): The path to the output PDF file. If not provided, the output file will be named after the image folder.
+    """
+
+    # If no output PDF file is provided, create one with the same name as the image folder
+    if output_pdf is None:
+        output_pdf = f"{img_folder}.pdf"
+    else:
+        output_pdf = output_pdf+".pdf"
+
+    # Get the list of image files, sorted by filename
+    img_files = sorted([f for f in os.listdir(img_folder) if f.lower().endswith(('jpg', 'jpeg', 'png', 'bmp', 'gif'))])
+
+    # Create the full paths for the image files
+    img_paths = [os.path.join(img_folder, f) for f in img_files]
+
+    # Convert the images to PDF and write them to the output file
+    with open(output_pdf, "wb") as pdf_file:
+        pdf_file.write(img2pdf.convert(img_paths))
+
+def pdf_to_img(pdf_file, output_folder=None, show_mess:bool=None, format:str= None):
+    """
+        Extract the images from the PDF file and save them to the output folder
+        Args:
+            pdf_file: The path to the PDF file to extract images from.
+            output_folder: The path to the folder where the extracted images will be saved.
+    """
+    format_list = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.webp']
+
+        # Extract the images from the PDF file and save them to the output folder
+    try:
+        if show_mess is None: 
+            show_mess = True
+
+        if format is None:
+            format = ".jpg"
+        else:
+            if "."+format not in format_list:
+                raise ValueError("Invalid format. Supported formats: jpg, jpeg, png, bmp, gif, webp")
+            else:
+                format = format.lower()
+
+        if not output_folder:
+            output_folder = os.path.splitext(pdf_file)[0]
+            os.makedirs(output_folder, exist_ok=True)
+            print("Folder Created with name: ",output_folder)
+
+        else:
+            print(f"Folder with name {output_folder} if exist, it will proceed to use it")
+
+        print("Extracting the images from the PDF")
+        images = pdf2image.convert_from_path(pdf_file)
+            
+        for i in range(len(images)):
+      # Save pages as images in the pdf
+            images[i].save(f'{output_folder}/page' + str(i) + format)
+            if show_mess:
+                print(f"Image {i} saved successfully")
+
+        print("Images extracted successfully")
+
+    except Exception as e:
+        print("Error:", e)
+        shutil.rmtree(output_folder)
+        
